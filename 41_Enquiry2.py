@@ -1,6 +1,7 @@
 from tkinter import *
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from PIL import Image, ImageTk  # pip install pillow
+import pymysql
 
 
 class Register:
@@ -32,7 +33,8 @@ class Register:
         self.txt_lname.place(x=370, y=130, width=250)
 
         ########## contacts
-        f_contacts = Label(frame1, text="Contact No: ", font=("times new roman", 15, "bold"), bg="white", fg="gray").place(x=50, y=160)
+        f_contacts = Label(frame1, text="Contact No: ", font=("times new roman", 15, "bold"), bg="white",
+                           fg="gray").place(x=50, y=160)
         self.txt_contacts = Entry(frame1, font=("times new roman", 15), bg="lightgray")
         self.txt_contacts.place(x=50, y=190, width=250)
 
@@ -43,8 +45,9 @@ class Register:
 
         ####### Questions
         s_question = Label(frame1, text="Security Question: ", font=("times new roman", 15, "bold"), bg="white", fg="gray").place(x=50, y=225)
+
         self.comb_question = ttk.Combobox(frame1, font=("times new roman", 12), state='readonly', justify=CENTER)
-        self.comb_question['values'] = ("Select", "Your First Name", "Your Last Name", "Your Birth Date")
+        self.comb_question['values'] = ("Select", "your first name", "Your Last Name", "Your Birth Date")
         self.comb_question.place(x=50, y=255, width=250)
         self.comb_question.current(0)
 
@@ -54,34 +57,66 @@ class Register:
         self.txt_answer.place(x=370, y=255, width=250)
 
         c_password = Label(frame1, text="Password", font=("times new roman", 15, "bold"), bg="white", fg="gray").place(x=50, y=300)
-        self.txt_psw = Entry(frame1, font=("times new roman", 15), bg="lightgray", show='*')
+        self.txt_psw = Entry(frame1, font=("times new roman", 15), bg="lightgray")
         self.txt_psw.place(x=50, y=340, width=250)
 
         con_password = Label(frame1, text="Confirm Password", font=("times new roman", 15, "bold"), bg="white", fg="gray").place(x=365, y=300)
-        self.txt_cpsw = Entry(frame1, font=("times new roman", 15), bg="lightgray", show='*')
+        self.txt_cpsw = Entry(frame1, font=("times new roman", 15), bg="lightgray")
         self.txt_cpsw.place(x=370, y=340, width=250)
+        #######  Checkbuttons
 
-        ####### Checkbuttons
         self.chk = IntVar()
-        chk = Checkbutton(frame1, text="I agree to the terms and conditions", variable=self.chk, onvalue=1, offvalue=0, bg="White", font=("times new roman", 12)).place(x=50, y=380)
+        chk = Checkbutton(frame1, text="I agree the terms and conditions", variable=self.chk, onvalue=1, offvalue=0, bg="White", font=("times new roman", 12)).place(x=50, y=380)
 
-        btn_smb = Button(frame1, text="Submit", font=("times new roman", 15, "bold"), bg="green", fg="gray", command=self.register_data).place(x=50, y=420)
+        self.btn_smb = Button(frame1, text="Submit", font=("times new roman", 15, "bold"), bg="green", fg="gray", command=self.register_data).place(x=50, y=420)
 
         ####### BUTTON SIGN IN
+
         b_signin = Button(self.root, text="Sign In", font=("times new roman", 20), bd=0).place(x=250, y=490)
 
+        # self.btn_img = ImageTk.PhotoImage(file="register.jpg")
+        # btn=Button(frame1, image=self.btn_img, bd=0).place(x=50, y=420)
+
+
+    def clear(self):
     def register_data(self):
-        if self.chk.get() == 0:
-            print("Please agree to the terms and conditions")
+        if (self.txt_fname.get() == "" or
+                self.txt_contacts.get() == "" or
+                self.txt_email.get() == "" or
+                self.comb_question.get() == "" or
+                self.txt_answer.get() == "" or
+                self.txt_psw.get() == "" or
+                self.txt_cpsw.get() == ""):
+            messagebox.showerror("ERROR, All field are required", parent=self.root)
+        elif self.txt_psw.get() != self.txt_cpsw.get():
+            messagebox.showerror("Error", "Password & confirmed password should be same", parent=self.root)
+        elif self.chk.get() == 0:
+            messagebox.showerror("Error", "please agree our Term and conditions", parent=self.root)
         else:
-            print(f"First Name: {self.txt_fname.get()}")
-            print(f"Last Name: {self.txt_lname.get()}")
-            print(f"Contact No: {self.txt_contacts.get()}")
-            print(f"Email: {self.txt_email.get()}")
-            print(f"Security Question: {self.comb_question.get()}")
-            print(f"Answer: {self.txt_answer.get()}")
-            print(f"Password: {self.txt_psw.get()}")
-            print(f"Confirm Password: {self.txt_cpsw.get()}")
+            try:
+                con = pymysql.connect(host="localhost", user="root", password="NO", database="employee")
+                cur = con.cursor()
+                cur.execute("select * from employee where email=%s", self.txt_email.get())
+                row = cur.fetchone()
+                # print(row)
+                if row!=None:
+                    messagebox.showerror("Error", "user already exist", parent=self.root)
+
+                cur.execute("insert into employee(f_name, l_name,contact, email, question, answer, password) values(%s,%s,%s,%s,%s,%s,%s)",
+                            (self.txt_fname.get(),
+                             self.txt_lname.get(),
+                             self.txt_contacts.get(),
+                             self.txt_email.get(),
+                             self.comb_question.get(),
+                             self.txt_answer.get(),
+                             self.txt_psw.get(),
+                             ))
+                con.commit()
+                con.close()
+                messagebox.showinfo("Success", "Register successful", parent=self.root)
+
+            except Exception as es:
+                messagebox.showerror("ERROR", f"Error due to : {str(es)}", parent=self.root)
 
 
 root = Tk()
