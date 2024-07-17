@@ -79,6 +79,15 @@ class Register:
 
 
     def clear(self):
+        self.txt_fname .delete(0, END)
+        self.txt_lname.delete(0, END)
+        self.txt_contacts.delete(0, END)
+        self.txt_email.delete(0, END)
+        self.comb_question.current(0, END)
+        self.txt_answer.delete(0, END)
+        self.txt_psw.delete(0, END)
+        self.txt_cpsw.delete(0, END)
+
     def register_data(self):
         if (self.txt_fname.get() == "" or
                 self.txt_contacts.get() == "" or
@@ -94,7 +103,7 @@ class Register:
             messagebox.showerror("Error", "please agree our Term and conditions", parent=self.root)
         else:
             try:
-                con = pymysql.connect(host="localhost", user="root", password="NO", database="employee")
+                con = pymysql.connect(host="@localhost", user="root", password="Shubhu@4632", database="employee")
                 cur = con.cursor()
                 cur.execute("select * from employee where email=%s", self.txt_email.get())
                 row = cur.fetchone()
@@ -114,7 +123,7 @@ class Register:
                 con.commit()
                 con.close()
                 messagebox.showinfo("Success", "Register successful", parent=self.root)
-
+                self.clear()
             except Exception as es:
                 messagebox.showerror("ERROR", f"Error due to : {str(es)}", parent=self.root)
 
